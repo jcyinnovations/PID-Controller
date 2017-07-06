@@ -111,31 +111,28 @@ void PID::UpdateError(double cte) {
   //Tuning only happens in TWIDDLE phase
   if (pid_phase == PIDPhase::TWIDDLE)
   {
+    error += cte*cte;
     // Run Twiddle once every N loops
     if (run_count >= N)
     {
-      error += cte*cte;
-      if (run_count >= 2*N)
+      error = error/N;
+      printf("TotalError: %6.4f \t", error);
+      //Update the current tuning parameter before running the controller
+      switch(tune_param)
       {
-        error = error/N;
-        printf("TotalError: %6.4f \t", error);
-        //Update the current tuning parameter before running the controller
-        switch(tune_param)
-        {
-          case KP:
-            UpdateParameter(KD, &dp_Kp, &Kp);
-            break;
-          case KD:
-            UpdateParameter(KI, &dp_Kd, &Kd);
-            break;
-          case KI:
-            UpdateParameter(KP, &dp_Ki, &Ki);
-            break;
-        }
-        pid_phase = PIDPhase::RESET; //Message to main loop to reset simulator
-        error = 0.0;
-        run_count = 0;
+        case KP:
+          UpdateParameter(KD, &dp_Kp, &Kp);
+          break;
+        case KD:
+          UpdateParameter(KI, &dp_Kd, &Kd);
+          break;
+        case KI:
+          UpdateParameter(KP, &dp_Ki, &Ki);
+          break;
       }
+      pid_phase = PIDPhase::RESET; //Message to main loop to reset simulator
+      error = 0.0;
+      run_count = 0;
     }
   } //End of TWIDDLE
 
@@ -149,7 +146,7 @@ double PID::TotalError() {
  * Reset Twiddle controls to start
  */
 void PID::Reset() {
-  pid_phase = PIDPhase::TWIDDLE;
+  pid_phase = PIDPhase::RAMP;
   int_cte = 0;
   prev_cte = 0;
   error = 0;
@@ -159,16 +156,18 @@ void PID::Reset() {
   d_error = 0;
 }
 
+void PID::Twiddle(double cte, double speed, double angle) {
+
+}
+
 double PID::Control(double cte, double speed, double angle) {
   double dt = 1;
-  if (speed > 0.01)
-    dt = 1/speed; // Use speed as a proxy for time
   int_cte += (cte*dt);
   //double control = -Kp*cte - Ki*int_cte - Kd*(cte - prev_cte);
   double control = -Kp*cte - Ki*int_cte - Kd*(cte - prev_cte)/dt;
   printf("CTE: %6.4f \t Control: %6.4f \t Speed: %6.4f \t", cte, control, speed);
   printf(" Errors: Kp: %6.4f, Ki: %6.4f, Kd: %6.4f \t", cte, int_cte, (cte-prev_cte)/dt);
-  //Reduce control to 75% max if too large
+  //Reduce control to max if too large
   if (control > 1)
     control = 1.0;
   else if (control < -1)

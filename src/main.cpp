@@ -37,19 +37,29 @@ void resetSimulator(PID pid, uWS::WebSocket<uWS::SERVER> ws) {
   ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 }
 
+void steer(PID pid, json msgJson, uWS::WebSocket<uWS::SERVER> ws) {
+  auto msg = "42[\"steer\"," + msgJson.dump() + "]";
+  std::cout << msg << std::endl ;
+  ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+}
+
 int main()
 {
   uWS::Hub h;
 
   PID pid;
   // TODO: Initialize the pid variable.
-  pid.Init(0.0, 0.0, 0.0, PIDPhase::TWIDDLE);
+  //pid.Init(0.0, 0.0, 0.0, PIDPhase::TWIDDLE);
   //pid.Init(0.2796, 0.0005, 3.0953, PIDPhase::RUN);
   //pid.Init(0.1796, 0.0005, 3.0953, PIDPhase::RUN);
   //pid.Init(0.1207, 0.00001, 0.8666, PIDPhase::RUN);
   //pid.Init(3.7773, -0.001763, 0.7961, PIDPhase::RUN);
   //pid.Init(0.7773, -0.0001, 0.7961, PIDPhase::RUN);
-  pid.Init(0.9960, 0.000499, 0.9670, PIDPhase::RUN);
+  //pid.Init(0.9960, 0.000499, 0.9670, PIDPhase::RUN);
+
+  pid.Init(0.0, 0.0, 0.0, PIDPhase::RAMP);
+  //pid.Init(1.0, 0.02745, 0.5659, PIDPhase::RUN);
+  //pid.Init(0.6996, 0.0, 19.5323, PIDPhase::RUN);
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -68,27 +78,53 @@ int main()
           double speed = std::stod(j[1]["speed"].get<std::string>());
           double angle = std::stod(j[1]["steering_angle"].get<std::string>());
 
-          if (pid.pid_phase == PIDPhase::RESET)
-            resetSimulator(pid, ws);
-          else {
-            pid.UpdateError(cte);
-            double steer_value = pid.Control(cte, speed, angle);
+          json msgJson;
+          double steer_value = angle;
 
-            json msgJson;
-            msgJson["steering_angle"] = steer_value;
-            /**
-             * Speed limiting
-             */
-            if (speed > 25)
-              msgJson["throttle"] = 0.0;
-            else
-              msgJson["throttle"] = 0.8;
+          switch(pid.pid_phase)
+          {
+            case RESET:
+              resetSimulator(pid, ws);
+              break;
+            case TWIDDLE:
+              pid.UpdateError(cte);
+              steer_value = pid.Control(cte, speed, angle);
+              msgJson["steering_angle"] = steer_value;
+              /**
+               * Speed limiting to training speed
+               */
+              if (speed >= 40)
+                msgJson["throttle"] = 0.00;
+              else
+                msgJson["throttle"] = 0.50;
+              steer(pid, msgJson, ws);
 
-            //msgJson["throttle"] = 0.8;
-            auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-            std::cout << msg << std::endl ;
-            ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+              break;
+            case RAMP:
+              if (speed >= 40)
+              {
+                msgJson["throttle"] = 0.00;
+                pid.pid_phase = PIDPhase::TWIDDLE;  //Training speed reached start TWIDDLE
+              } else
+                msgJson["throttle"] = 0.95;
+
+              steer_value = -0.15*cte;
+              msgJson["steering_angle"] = steer_value;
+              steer(pid, msgJson, ws);
+              /**
+              auto msg = "42[\"steer\"," + msgJson.dump() + "]";
+              std::cout << msg << std::endl ;
+              ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+              **/
+              break;
+            case RUN:
+              //Default is RUN
+              msgJson["throttle"] = 0.40;
+              steer_value = pid.Control(cte, speed, angle);
+              msgJson["steering_angle"] = steer_value;
+              steer(pid, msgJson, ws);
           }
+
         }
       } else {
         // Manual driving

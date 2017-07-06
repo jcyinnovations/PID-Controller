@@ -11,10 +11,11 @@ enum PIDParam {
 /**
  * RESET - after a tuning run, center the car before restarting twiddle
  * TWIDDLE - tune the POD parameters
+ * RAMP - Accelerate to training speed prior to twiddle
  * RUN - run with established parameters
  */
 enum PIDPhase {
-  RESET, TWIDDLE, RUN
+  RESET, TWIDDLE, RAMP, RUN
 };
 
 class PID {
@@ -94,6 +95,11 @@ public:
    * Set the Twiddle back to start for next iteration
    */
   void Reset();
+
+  /**
+   * Run Twiddle to tune the controller
+   */
+  void Twiddle(double cte, double speed, double angle);
 
 private:
   /**
