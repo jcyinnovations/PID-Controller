@@ -121,13 +121,13 @@ void PID::UpdateError(double cte) {
       switch(tune_param)
       {
         case KP:
-          UpdateParameter(KD, &dp_Kp, &Kp);
+          UpdateParameter(KI, &dp_Kp, &Kp);
           break;
         case KD:
-          UpdateParameter(KI, &dp_Kd, &Kd);
+          UpdateParameter(KP, &dp_Kd, &Kd);
           break;
         case KI:
-          UpdateParameter(KP, &dp_Ki, &Ki);
+          UpdateParameter(KD, &dp_Ki, &Ki);
           break;
       }
       pid_phase = PIDPhase::RESET; //Message to main loop to reset simulator
@@ -166,14 +166,14 @@ double PID::Control(double cte, double speed, double angle) {
   //double control = -Kp*cte - Ki*int_cte - Kd*(cte - prev_cte);
   double control = -Kp*cte - Ki*int_cte - Kd*(cte - prev_cte)/dt;
   printf("CTE: %6.4f \t Control: %6.4f \t Speed: %6.4f \t", cte, control, speed);
-  printf(" Errors: Kp: %6.4f, Ki: %6.4f, Kd: %6.4f \t", cte, int_cte, (cte-prev_cte)/dt);
+  printf(" Errors (Kp,Ki,Kd): %6.4f, %6.4f, %6.4f \t", cte, int_cte, (cte-prev_cte)/dt);
   //Reduce control to max if too large
   if (control > 1)
     control = 1.0;
   else if (control < -1)
     control = -1.0;
   prev_cte = cte;
-  printf("Params: Kp: %6.4f, Ki: %7.6f, Kd: %6.4f \t", Kp, Ki, Kd);
-  printf(" Deltas: Kp: %4.2f, Ki: %4.2f, Kd: %4.2f \t", dp_Kp, dp_Ki, dp_Kd);
+  printf("Params (Kp,Ki,Kd): %6.4f, %7.6f, %6.4f \t", Kp, Ki, Kd);
+  printf(" Deltas (Kp,Ki,Kd): %4.2f, %4.2f, %4.2f \t", dp_Kp, dp_Ki, dp_Kd);
   return control;
 }
