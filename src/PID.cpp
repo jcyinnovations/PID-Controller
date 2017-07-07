@@ -29,12 +29,12 @@ void PID::Init(double Kp, double Ki, double Kd, PIDPhase phase) {
   PID::Ki = Ki;
   PID::Kd = Kd;
   tuning_pass= 1;
-  tolerance = 0.001;
+  tolerance = 0.01;
   best_error = numeric_limits<double>::max();
-  N = 400;
-  dp_Kp = 0.5;
-  dp_Ki = 0.25;
-  dp_Kd = 0.25;
+  N = 500;
+  dp_Kp = 1.0;
+  dp_Ki = 1.0;
+  dp_Kd = 1.0;
   run_count = 0;
   prev_control = 0.0;
   prev_ts = 0;
@@ -85,7 +85,7 @@ void PID::UpdateParameter(PIDParam next_param, double *delta, double *parameter 
         (*delta) *= 1.1;
       } else {
         (*parameter) += (*delta);
-        (*delta) *= 0.9;
+        (*delta) *= 0.95;
       }
       tune_param = next_param; //switch to the next parameter.
       tuning_pass = 1;

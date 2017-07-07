@@ -57,10 +57,11 @@ int main()
   //pid.Init(0.7773, -0.0001, 0.7961, PIDPhase::RUN);
   //pid.Init(0.9960, 0.000499, 0.9670, PIDPhase::RUN);
 
-  //pid.Init(0.0, 0.0, 0.0, PIDPhase::RAMP);
+  pid.Init(0.0, 0.0, 0.0, PIDPhase::RAMP);
   //pid.Init(1.0, 0.02745, 0.5659, PIDPhase::RUN);
-  //pid.Init(0.6996, 0.0, 19.5323, PIDPhase::RUN);
-  pid.Init(0.1089, 0.0, 1.7149, PIDPhase::RUN);
+  //pid.Init(0.6996, 0.0, 19.5323, PIDPhase::RUN); // Runs but jerky
+  //pid.Init(0.1089, 0.0, 1.7149, PIDPhase::RUN);//Smooth running
+  pid.Init(0.6464, 0.001442, 16.8774, PIDPhase::RUN); //Smooth running, quicker response, less slop
 
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -99,7 +100,6 @@ int main()
               else
                 msgJson["throttle"] = 0.50;
               steer(pid, msgJson, ws);
-
               break;
             case RAMP:
               if (speed >= 40)
@@ -108,7 +108,6 @@ int main()
                 pid.pid_phase = PIDPhase::TWIDDLE;  //Training speed reached start TWIDDLE
               } else
                 msgJson["throttle"] = 0.95;
-
               steer_value = -0.15*cte;
               msgJson["steering_angle"] = steer_value;
               steer(pid, msgJson, ws);
@@ -120,7 +119,7 @@ int main()
               break;
             case RUN:
               //Default is RUN
-              msgJson["throttle"] = 0.35;
+              msgJson["throttle"] = 0.40;
               steer_value = pid.Control(cte, speed, angle);
               msgJson["steering_angle"] = steer_value;
               steer(pid, msgJson, ws);
