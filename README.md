@@ -1,5 +1,17 @@
-# CarND-Controls-PID
+# Term 2 Project 4: PID Controller
 Self-Driving Car Engineer Nanodegree Program
+
+---
+
+## Notes
+This commit demonstrates the best results of training the controller to-date. The control is smooth and stable and has been tested stable with speeds up to 65 mph. Control is somewhat sloppy in some turns notably the third turn. Manual tuning of the parameters only served to increase the instability of the controller; likely indicating that some control over throttle would assist with turning. The throttle is switched between close to half and zero (no throttle) to maintain the set speed for running.
+
+The control parameters were derived from using running the built-in Twiddle on the controller. Using Twiddle is triggered by passing the `PIDPhase` to the Init() function. `PIDPhase::TWIDDLE` starts Twiddle directly whereas `PIDPhase::RAMP` sets the car to a fixed speed before starting Twiddle.
+
+To start each Twiddle loop, the simulator is reset of its starting position and the car is accelerated to a training speed of 40 mph using a fixed Kp=0.15. Twiddle is then run for 400 iterations (N) and the error used to update the parameter before the next loop. The choice of Kp and training speed for the car as well as N were determined through experimentation. It was hard to reach higher speeds without putting the car into the ditch before starting Twiddle and at 40mph, N=400 was just enough to get the car around the first turn. This allowed the training error to reflect any oscillations that occurred due to turning.
+
+The increments of the parameters Kp, Ki and Kd were also lowered from 1.0 to 0.5, 0.25 and 0.25 respectively as this seemed to help training settle into a solution.
+
 
 ---
 
@@ -35,58 +47,3 @@ There's an experimental patch for windows in this [PR](https://github.com/udacit
 3. Compile: `cmake .. && make`
 4. Run it: `./pid`. 
 
-## Editor Settings
-
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
-
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
-
-## Code Style
-
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
-
-## Project Instructions and Rubric
-
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
-
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/e8235395-22dd-4b87-88e0-d108c5e5bbf4/concepts/6a4d8d42-6a04-4aa6-b284-1697c0fd6562)
-for instructions and the project rubric.
-
-## Hints!
-
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
-
-## Call for IDE Profiles Pull Requests
-
-Help your fellow students!
-
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
-
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
-
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
-
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
